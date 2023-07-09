@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use App\Models\Cart;
-
+use Illuminate\Support\Facades\Session;
 
 class ProductController extends Controller
 {
@@ -31,6 +31,10 @@ class ProductController extends Controller
       ->get();
       return view('search',['products'=>$data]);
     }
+    static function cartItem(){
+        $user_id=Session::get('user')['id'];
+        return Cart::where('user_id',$user_id)->count();
+    }
     public function addToCart(Request $req){
         if($req->session()->has('user')){
             $cart=new Cart;
@@ -42,6 +46,20 @@ class ProductController extends Controller
         }else{
             return redirect('/login');
         }
+    }
+    public function cartList(){
+        $user_id=Session::get('user')['id'];
+      $data=  DB::table('cart')
+        ->join('product','cart.product_id','product.id')
+        ->select('product.*','cart.id as cart_id')
+        ->where('cart.user_id',$user_id)
+        ->get();
+        return view('cartlist',['products'=>$data]);
+        
+    }
+    public function removeCart($id){
+        Cart::destroy($id);
+        return redirect('cartlist');
     }
     /**
      * Show the form for creating a new resource.
